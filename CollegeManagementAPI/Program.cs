@@ -5,8 +5,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 
-builder.Services.Configure<CollegeManagementDatabaseSettings>(
-    builder.Configuration.GetSection("CollegeManagemenetDatabase"));
+builder.Services.Configure<CollegeManagementDatabaseSettings>(builder.Configuration.GetSection("CollegeManagemenetDatabase"));
 
 
 builder.Services.AddEndpointsApiExplorer();
