@@ -1,4 +1,5 @@
-﻿using MongoDB.Driver;
+﻿using CollegeManagementAPI.Models;
+using MongoDB.Driver;
 
 namespace CollegeManagementAPI.Data
 {
@@ -12,6 +13,6 @@ namespace CollegeManagementAPI.Data
             _database = client.GetDatabase(databaseName);
         }
 
-        public IMongoCollection<Product> Products => _database.GetCollection<Product>("Products");
+        public IMongoCollection<Organization> Organizations => _database.GetCollection<Organization>("Organizations");
     }
 }
