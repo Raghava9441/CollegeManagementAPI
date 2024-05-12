@@ -8,9 +8,17 @@ namespace CollegeManagementAPI.Models
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
         public string Id { get; set; }
+
+        [BsonRequired]
         public string Name { get; set; }
+
+        [BsonRequired]
         public string Category { get; set; }
-        public string Adress { get; set; }
+
+        [BsonRequired]
+        public string Address { get; set; }
+
+        [BsonRequired]
         public string Number { get; set; }
     }
 }
