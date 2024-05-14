@@ -18,6 +18,8 @@ builder.Services.Configure<DatabaseSettings>(
 builder.Services.AddTransient<IOrganizationService, OrganizationService>();
 builder.Services.AddTransient<ITeacherService, TeacherService>();
 builder.Services.AddTransient<IStudentService, StudentService>();
+builder.Services.AddTransient<IParentService, ParentService>();
+
 
 
 
