@@ -15,7 +15,7 @@ namespace CollegeManagementAPI.Models
         public float Fee { get; set; }
         public float PendingFee { get; set; }
         public string Course { get; set; }
-        public List<Teacher> Teachers { get; set; }
-        public List<Parent> Parents { get; set; }
+        public string TeacherId { get; set; }
+        public string OrganizationId { get; set; }
     }
 }

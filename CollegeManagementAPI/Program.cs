@@ -1,5 +1,6 @@
 using CollegeManagementAPI.Models;
 using CollegeManagementAPI.Services;
+using CollegeManagementAPI.Services.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
@@ -16,6 +17,8 @@ builder.Services.Configure<DatabaseSettings>(
 
 builder.Services.AddTransient<IOrganizationService, OrganizationService>();
 builder.Services.AddTransient<ITeacherService, TeacherService>();
+builder.Services.AddTransient<IStudentService, StudentService>();
+
 
 
 var app = builder.Build();

@@ -1,4 +1,5 @@
 ﻿using CollegeManagementAPI.Models;
+using CollegeManagementAPI.Services.Models;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 

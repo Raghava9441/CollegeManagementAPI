@@ -1,5 +1,5 @@
 ﻿using CollegeManagementAPI.Models;
-using CollegeManagementAPI.Services;
+using CollegeManagementAPI.Services.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
