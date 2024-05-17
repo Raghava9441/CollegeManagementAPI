@@ -9,7 +9,6 @@ namespace CollegeManagementAPI.Models
         [BsonRepresentation(BsonType.ObjectId)]
         public string Id { get; set; }
 
-        // Other teacher properties
         [BsonRepresentation(BsonType.ObjectId)]
         public string OrganizationId { get; set; }
         public string Subject { get; set; }

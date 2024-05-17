@@ -1,5 +1,6 @@
 ﻿using CollegeManagementAPI.Models;
 using CollegeManagementAPI.Services.Models;
+using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,9 +11,12 @@ namespace CollegeManagementAPI.Controllers
     public class OrganizationController : ControllerBase
     {
         private readonly IOrganizationService _organizationService;
-        public OrganizationController(IOrganizationService organizationService)
+        private readonly IValidator<Organization> _organizationValidator;
+
+        public OrganizationController(IOrganizationService organizationService, IValidator<Organization> organizationValidator)
         {
             _organizationService = organizationService;
+            _organizationValidator = organizationValidator;
         }
         [HttpGet]
         public async Task<IActionResult> Get()
@@ -23,7 +27,7 @@ namespace CollegeManagementAPI.Controllers
         [HttpGet("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Organization))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetById(string id)
+        public async Task<ActionResult<Organization>> GetById(string id)
         {
             var organizations = await _organizationService.GetById(id);
             return Ok(organizations);
@@ -31,15 +35,36 @@ namespace CollegeManagementAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> Post(Organization org)
         {
+            var validationResult = _organizationValidator.Validate(org);
+            if (!validationResult.IsValid)
+            {
+                foreach (var error in validationResult.Errors)
+                {
+                    ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+                }
+                return BadRequest(ModelState);
+            }
+
             await _organizationService.CreateAsync(org);
             return Ok("created successfully");
         }
         [HttpPut("{id}")]
-        public async Task<IActionResult> Put(string id, [FromBody] Organization org)
+        public async Task<IActionResult> Put( string id,  Organization org)
         {
-            var Organization = await _organizationService.GetById(id);
-            if (Organization == null)
+            var validationResult = _organizationValidator.Validate(org);
+            if (!validationResult.IsValid)
+            {
+                foreach (var error in validationResult.Errors)
+                {
+                    ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+                }
+                return BadRequest(ModelState);
+            }
+
+            var existingOrganization = await _organizationService.GetById(id);
+            if (existingOrganization == null)
                 return NotFound();
+
             await _organizationService.UpdateAsync(id, org);
             return Ok("updated successfully");
         }

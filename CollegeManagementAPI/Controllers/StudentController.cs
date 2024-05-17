@@ -1,6 +1,7 @@
 ﻿using CollegeManagementAPI.Models;
 using CollegeManagementAPI.Services.Models;
-using Microsoft.AspNetCore.Http;
+using CollegeManagementAPI.Validators;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CollegeManagementAPI.Controllers
@@ -10,9 +11,13 @@ namespace CollegeManagementAPI.Controllers
     public class StudentController : ControllerBase
     {
         private readonly IStudentService _studentService;
-        public StudentController(IStudentService student)
+        private readonly IValidator<Student> _studentValidator;
+        public StudentController(IStudentService studentService
+            ,IValidator<Student> studentValidator
+            )
         {
-            _studentService = student;
+            _studentService = studentService;
+            _studentValidator = studentValidator;
         }
         [HttpGet]
         public async Task<IActionResult> Get()
@@ -26,21 +31,43 @@ namespace CollegeManagementAPI.Controllers
         public async Task<IActionResult> GetById(string id)
         {
             var organizations = await _studentService.GetById(id);
+            if (organizations == null)
+                return BadRequest();
             return Ok(organizations);
         }
         [HttpPost]
-        public async Task<IActionResult> Post(Student teacher)
+        public async Task<IActionResult> Post(Student student)
         {
-            await _studentService.CreateAsync(teacher);
+            //var validationResults = _studentValidator.Validate(student);
+            //if (!validationResults.IsValid)
+            //{
+            //    foreach (var error in validationResults.Errors)
+            //    {
+            //        ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+
+            //    }
+            //    return BadRequest(ModelState);
+            //}
+
+            await _studentService.CreateAsync(student);
             return Ok("created successfully");
         }
         [HttpPut("{id}")]
-        public async Task<IActionResult> Put(string id, [FromBody] Student teacher)
+        public async Task<IActionResult> Put(string id, [FromBody] Student student)
         {
+            //var validationResult = _studentValidator.Validate(student);
+            //if (!validationResult.IsValid)
+            //{
+            //    foreach (var error in validationResult.Errors)
+            //    {
+            //        ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+            //    }
+            //    return BadRequest(ModelState);
+            //}
             var Organization = await _studentService.GetById(id);
             if (Organization == null)
                 return NotFound();
-            await _studentService.UpdateAsync(id, teacher);
+            await _studentService.UpdateAsync(id, student);
             return Ok("updated successfully");
         }
         [HttpDelete("{id}")]

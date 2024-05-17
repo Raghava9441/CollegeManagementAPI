@@ -1,6 +1,6 @@
 ﻿namespace CollegeManagementAPI.Models
 {
-    public class User
+    public class User:BaseEntity
     {
         public string Id { get; set; }
         public string Email { get; set; }
