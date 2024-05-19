@@ -8,6 +8,7 @@
         public string? TeachersCollectionName { get; set; }
         public string? StudentCollectionName { get; set; }
         public string? ParentCollectionName { get; set; }
+        public string? UserCollectionName { get; set; }
 
     }
 }
