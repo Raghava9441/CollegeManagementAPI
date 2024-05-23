@@ -23,8 +23,18 @@ namespace CollegeManagementAPI.Services
         public async Task<User> Authenticate(string email, string password)
         {
             var user = await _userCollection.Find(u => u.Email == email).FirstOrDefaultAsync();
-            if (user == null || !VerifyPasswordHash(password, user.PasswordHash))
+            if (user == null)
+            {
+                Console.WriteLine("User not found");
                 return null;
+            }
+
+            var salt = Convert.FromBase64String(user.PasswordSalt);
+            if (!VerifyPasswordHash(password, user.PasswordHash, salt))
+            {
+                Console.WriteLine("Password verification failed");
+                return null;
+            }
 
             return user;
         }
@@ -38,23 +48,50 @@ namespace CollegeManagementAPI.Services
             if (await _userCollection.Find(u => u.Email == user.Email).AnyAsync())
                 throw new ApplicationException("Username already exists");
 
-            user.PasswordHash = CreatePasswordHash(password);
+            var (hash, salt) = CreatePasswordHash(password);
+            user.PasswordHash = hash;
+            user.PasswordSalt = Convert.ToBase64String(salt); // Store the salt
+
             await _userCollection.InsertOneAsync(user);
             return user;
+
         }
 
-        private string CreatePasswordHash(string password)
+        public async Task<string> GenerateRefreshToken()
+        {
+            var randomNumber = new byte[32];
+            using (var rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(randomNumber);
+                return Convert.ToBase64String(randomNumber);
+            }
+        }
+
+        public async Task<User> GetUserWithRefreshToken(string refreshToken)
+        {
+            return await _userCollection.Find(u => u.RefreshToken == refreshToken).FirstOrDefaultAsync();
+        }
+
+        public async Task RevokeRefreshToken(User user)
+        {
+            user.RefreshToken = null;
+            user.RefreshTokenExpiryTime = DateTime.MinValue;
+            await _userCollection.ReplaceOneAsync(u => u.Id == user.Id, user);
+        }
+        private (string PasswordHash, byte[] Salt) CreatePasswordHash(string password)
         {
             using var hmac = new HMACSHA512();
+            var salt = hmac.Key;
             var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
-            return Convert.ToBase64String(hash);
+            return (Convert.ToBase64String(hash), salt);
         }
 
-        private bool VerifyPasswordHash(string password, string storedHash)
+        private bool VerifyPasswordHash(string password, string storedHash, byte[] salt)
         {
-            using var hmac = new HMACSHA512();
+            using var hmac = new HMACSHA512(salt);
             var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
             return Convert.ToBase64String(hash) == storedHash;
         }
+
     }
 }

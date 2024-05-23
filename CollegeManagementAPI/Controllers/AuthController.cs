@@ -20,27 +20,37 @@ namespace CollegeManagementAPI.Controllers
         {
             _configuration = configuration;
             _userService = userService;
-            
         }
 
         [HttpPost("login")]
-        public IActionResult Login([FromBody] LoginModel login)
+        public async Task<IActionResult> Login([FromBody] LoginModel login)
         {
-            // Here you should validate the user credentials from the database
-            if (IsValidUserCredentials(login))
+            try
             {
-                var token = GenerateJwtToken(login.Username, "Admin"); // Replace "Admin" with the actual role of the user
-                return Ok(new { token });
+                var user = await _userService.Authenticate(login.Email, login.Password);
+
+                if (user != null)
+                {
+                    var token = GenerateJwtToken(user.Email, user.Role); // Pass UserRole type directly
+                    return Ok(new { token });
+                }
+
+                return Unauthorized("Invalid username or password");
             }
-            return Unauthorized();
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error during authentication: {ex.Message}");
+                return StatusCode(500, "Internal server error");
+            }
         }
+
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterModel register)
         {
             var user = new User
             {
                 Email = register.Email,
-                Role = (Models.UserRole)register.Role
+                Role = (UserRole)register.Role
             };
 
             try
@@ -54,14 +64,23 @@ namespace CollegeManagementAPI.Controllers
             }
         }
 
-
-        private bool IsValidUserCredentials(LoginModel login)
+        [HttpPost("refresh")]
+        public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest request)
         {
-            // Validate user credentials here (e.g., check against a database)
-            return true;
+            var user = await _userService.GetUserWithRefreshToken(request.RefreshToken);
+            if (user == null || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
+                return Unauthorized();
+
+            var token = GenerateJwtToken(user.Email, user.Role);
+            var newRefreshToken = await _userService.GenerateRefreshToken();
+            user.RefreshToken = newRefreshToken;
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+            await _userService.Register(user, ""); // Update user with new refresh token
+
+            return Ok(new { token, refreshToken = newRefreshToken });
         }
 
-        private string GenerateJwtToken(string email, string role)
+        private string GenerateJwtToken(string email, UserRole role)
         {
             var key = Encoding.ASCII.GetBytes(_configuration["Jwt:SecretKey"]);
             var tokenHandler = new JwtSecurityTokenHandler();
@@ -70,7 +89,7 @@ namespace CollegeManagementAPI.Controllers
                 Subject = new ClaimsIdentity(new[]
                 {
                     new Claim(ClaimTypes.Name, email),
-                    new Claim(ClaimTypes.Role, role)
+                    new Claim(ClaimTypes.Role, role.ToString()) // Use UserRole.ToString() for claim
                 }),
                 Expires = DateTime.UtcNow.AddDays(7),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
@@ -83,7 +102,7 @@ namespace CollegeManagementAPI.Controllers
 
     public class LoginModel
     {
-        public string Username { get; set; }
+        public string Email { get; set; }
         public string Password { get; set; }
     }
 
@@ -93,11 +112,10 @@ namespace CollegeManagementAPI.Controllers
         public string Password { get; set; }
         public UserRole Role { get; set; }
     }
-    public enum UserRole
+
+
+    public class RefreshTokenRequest
     {
-        Admin,
-        Teacher,
-        Student,
-        Parent
+        public string RefreshToken { get; set; }
     }
 }

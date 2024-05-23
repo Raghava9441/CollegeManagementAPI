@@ -1,6 +1,7 @@
 ﻿using CollegeManagementAPI.Models;
 using CollegeManagementAPI.Services.Models;
 using FluentValidation;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,6 +9,7 @@ namespace CollegeManagementAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Policy = "AdminPolicy")]
     public class OrganizationController : ControllerBase
     {
         private readonly IOrganizationService _organizationService;
